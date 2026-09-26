@@ -16,6 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchZones();
 });
 
+// Map GIS Layers
+let currentBaseLayer = null;
+let radarOverlayLayer = null;
+let activeLayerType = "bhuvan";
+
 // --- 1. LEAFLET MAP INITIALIZATION ---
 function initMap() {
     map = L.map("disaster-map", {
@@ -24,11 +29,124 @@ function initMap() {
         zoomControl: true
     });
 
-    // High-contrast Dark GIS Tiles
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
-        maxZoom: 18
-    }).addTo(map);
+    // Default to ISRO Bhuvan Satellite
+    setMapLayer("bhuvan");
+}
+
+function setMapLayer(layerType) {
+    activeLayerType = layerType;
+    if (currentBaseLayer) {
+        map.removeLayer(currentBaseLayer);
+    }
+    if (radarOverlayLayer) {
+        map.removeLayer(radarOverlayLayer);
+        radarOverlayLayer = null;
+    }
+
+    const mapboxKey = localStorage.getItem("resqcast_mapbox_key") || "";
+    const weatherKey = localStorage.getItem("resqcast_weather_key") || "";
+
+    if (layerType === "bhuvan") {
+        currentBaseLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+            attribution: "&copy; ISRO Bhuvan / NRSC &copy; ESRI Earth Observation",
+            maxZoom: 19
+        }).addTo(map);
+    } else if (layerType === "insat") {
+        currentBaseLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            attribution: "&copy; ISRO INSAT-3D MOSDAC &copy; OpenStreetMap",
+            maxZoom: 18
+        }).addTo(map);
+
+        // INSAT Radar Precipitation Overlay
+        if (weatherKey) {
+            radarOverlayLayer = L.tileLayer(`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${weatherKey}`, {
+                opacity: 0.7,
+                attribution: "&copy; OpenWeatherMap / INSAT Radar"
+            }).addTo(map);
+        } else {
+            // Free Doppler precipitation tile fallback
+            radarOverlayLayer = L.tileLayer("https://tilecache.rainviewer.com/v2/radar/nowcast_10m/256/{z}/{x}/{y}/2/1_1.png", {
+                opacity: 0.65,
+                attribution: "&copy; INSAT-3D Doppler Radar Feed"
+            }).addTo(map);
+        }
+    } else if (layerType === "cartodem") {
+        currentBaseLayer = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; ISRO CartoDEM / OpenTopoMap",
+            maxZoom: 17
+        }).addTo(map);
+    } else if (layerType === "dark") {
+        currentBaseLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            attribution: "&copy; CARTO Tactical Dark &copy; OpenStreetMap",
+            maxZoom: 18
+        }).addTo(map);
+    } else if (layerType === "mapbox") {
+        if (mapboxKey) {
+            currentBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=${mapboxKey}`, {
+                attribution: "&copy; Mapbox &copy; OpenStreetMap",
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 20
+            }).addTo(map);
+        } else {
+            alert("Please enter a Mapbox Access Token in the Map API Key configuration.");
+            openMapKeyModal();
+            return;
+        }
+    }
+
+    // Update Button Active Classes
+    ["bhuvan", "insat", "cartodem", "dark"].forEach(id => {
+        const btn = document.getElementById(`layer-btn-${id}`);
+        if (btn) {
+            if (id === layerType) {
+                btn.className = "px-2.5 py-1 rounded font-bold bg-cyan-600 text-white shadow border border-cyan-400";
+            } else {
+                btn.className = "px-2.5 py-1 rounded font-bold bg-[#070d1e] text-slate-300 hover:text-white border border-[#203354]";
+            }
+        }
+    });
+}
+
+// Map Key Modal Functions
+function openMapKeyModal() {
+    const modal = document.getElementById("map-key-modal");
+    if (!modal) return;
+    document.getElementById("custom-mapbox-key-input").value = localStorage.getItem("resqcast_mapbox_key") || "";
+    document.getElementById("custom-weather-key-input").value = localStorage.getItem("resqcast_weather_key") || "";
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function closeMapKeyModal() {
+    const modal = document.getElementById("map-key-modal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+
+function saveCustomMapKeys() {
+    const mapboxKey = document.getElementById("custom-mapbox-key-input").value.trim();
+    const weatherKey = document.getElementById("custom-weather-key-input").value.trim();
+
+    if (mapboxKey) {
+        localStorage.setItem("resqcast_mapbox_key", mapboxKey);
+    } else {
+        localStorage.removeItem("resqcast_mapbox_key");
+    }
+
+    if (weatherKey) {
+        localStorage.setItem("resqcast_weather_key", weatherKey);
+    } else {
+        localStorage.removeItem("resqcast_weather_key");
+    }
+
+    closeMapKeyModal();
+    if (mapboxKey) {
+        setMapLayer("mapbox");
+    } else {
+        setMapLayer(activeLayerType);
+    }
 }
 
 // --- 2. WEBSOCKET REAL-TIME SYNC ---

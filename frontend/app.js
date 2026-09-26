@@ -633,3 +633,28 @@ function closeSituationReportModal() {
     document.getElementById("sitrep-modal").classList.add("hidden");
     document.getElementById("sitrep-modal").classList.remove("flex");
 }
+
+// --- 13. LIVE TELEMETRY SYNC ---
+async function syncLiveTelemetryFeeds() {
+    try {
+        const res = await fetch("/api/disaster/sync-live-weather", { method: "POST" });
+        if (res.ok) {
+            const data = await res.json();
+            const badge = document.getElementById("ws-status-badge");
+            if (badge) {
+                badge.innerHTML = `
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span>LIVE SYNCED (${data.zones_updated} ZONES)</span>
+                `;
+                setTimeout(() => {
+                    badge.innerHTML = `
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span>LIVE MULTIMODAL FEED</span>
+                    `;
+                }, 4000);
+            }
+        }
+    } catch (e) {
+        console.error("Live weather sync error:", e);
+    }
+}

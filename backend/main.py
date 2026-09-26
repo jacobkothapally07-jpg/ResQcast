@@ -25,6 +25,7 @@ from models import (
 )
 from simulation import get_default_disaster_zones
 from multimodal_engine import MultimodalFusionEngine, DisasterTimelineSimulator
+from live_fetcher import sync_all_zones_live_data
 
 app = FastAPI(
     title="RakshaCast-Forge | Multimodal AI Disaster Intelligence Platform",
@@ -44,6 +45,23 @@ app.add_middleware(
 zones_db: Dict[str, DisasterZone] = {z.zone_id: z for z in get_default_disaster_zones()}
 operator_logs: List[Dict[str, Any]] = []
 active_websockets: List[WebSocket] = []
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initializes live telemetry sync and starts periodic background fetch."""
+    async def periodic_live_sync():
+        while True:
+            try:
+                updated = await sync_all_zones_live_data(zones_db)
+                if updated > 0:
+                    for z in zones_db.values():
+                        await broadcast_zone_update(z)
+            except Exception as e:
+                print(f"[LiveSync] Background error: {e}")
+            await asyncio.sleep(45)  # Every 45s
+
+    asyncio.create_task(periodic_live_sync())
 
 
 # --- WebSocket Manager ---
@@ -192,6 +210,19 @@ async def ingest_live_disaster_event(raw_event: Dict[str, Any]):
         "uncertainty_margin": f"±{target_zone.uncertainty_margin}%",
         "primary_driver": fusion_res.primary_driver,
         "evidence_breakdown": fusion_res.evidence_breakdown
+    }
+
+
+@app.post("/api/disaster/sync-live-weather")
+async def trigger_live_weather_sync():
+    """Manually triggers real-time data sync with Open-Meteo & IMD radar."""
+    updated = await sync_all_zones_live_data(zones_db)
+    for z in zones_db.values():
+        await broadcast_zone_update(z)
+    return {
+        "status": "LIVE_WEATHER_SYNCED",
+        "zones_updated": updated,
+        "timestamp": time.time()
     }
 
 

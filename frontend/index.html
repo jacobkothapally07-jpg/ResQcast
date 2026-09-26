@@ -793,7 +793,7 @@
             modal.classList.add("hidden");
             modal.classList.remove("flex");
         }
-    <script>
+
         lucide.createIcons();
 
         // Dual-Mode Web View Switcher
@@ -830,6 +830,17 @@
                 if (window.map) setTimeout(() => window.map.invalidateSize(), 150);
             }
         }
+
+        // Auto-switch to citizen mode if requested in URL or on mobile device
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'citizen' || (window.innerWidth < 768 && urlParams.get('mode') !== 'ndrf')) {
+                // If on mobile screen without explicit mode, default to citizen view
+                if (urlParams.get('mode') === 'citizen') {
+                    switchViewMode('citizen');
+                }
+            }
+        });
     </script>
 </body>
 </html>

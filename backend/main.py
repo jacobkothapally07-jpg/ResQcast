@@ -8,6 +8,7 @@ import time
 import json
 import asyncio
 from typing import Dict, List, Optional, Any
+from pydantic import BaseModel
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

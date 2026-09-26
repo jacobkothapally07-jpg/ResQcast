@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RakshaCast | National Disaster Early Warning Network</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RakshaCast | National Disaster Early Warning System</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -145,10 +145,6 @@
 
                 <!-- Role & Simulation Switcher -->
                 <div class="flex items-center space-x-1.5">
-                    <a href="/ndrf" title="Open NDRF Command Center" class="px-2 py-1 rounded-lg text-[10px] font-extrabold bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700 transition shadow flex items-center space-x-1 border border-orange-400 active:scale-95">
-                        <span>👮‍♂️</span>
-                        <span>NDRF</span>
-                    </a>
                     <button onclick="navigate('demo')" title="Launch SIH Demo Dashboard" class="px-2 py-1 rounded-lg text-[10px] font-extrabold bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 transition shadow flex items-center space-x-1 border border-amber-400 active:scale-95">
                         <span>🎬</span>
                         <span>SIH Demo</span>
@@ -159,20 +155,6 @@
                 </div>
             </div>
         </header>
-
-        <!-- Live NDRF Connected Dispatch Status Banner -->
-        <div id="citizen-dispatch-status-banner" class="hidden m-2 bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-950 border-2 border-emerald-400 rounded-xl p-3 text-white space-y-1 shadow-lg shrink-0 animate-bounce">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span class="text-[11px] font-black text-emerald-400 uppercase tracking-wider">NDRF Rescue Dispatched!</span>
-                </div>
-                <span id="citizen-dispatch-eta" class="text-[9px] bg-emerald-900/80 text-emerald-200 px-1.5 py-0.5 rounded font-mono font-extrabold">ETA: 8 MINS</span>
-            </div>
-            <p class="text-[10px] text-slate-200 leading-snug" id="citizen-dispatch-msg">
-                10th NDRF Battalion boat unit is actively en route to your GPS coordinates. Stay in safe elevation.
-            </p>
-        </div>
 
         <!-- 3. SCROLLABLE SCREEN CONTENT CONTAINER -->
         <div id="screen-viewport" class="flex-1 overflow-y-auto custom-scrollbar p-3.5 space-y-3.5 pb-28 bg-slate-100">
@@ -194,49 +176,14 @@
 
     </div>
 
-    <!-- APP SCRIPTS -->
+    <!-- APP SCRIPT -->
     <script src="/mobile-app.js"></script>
     <script>
         setInterval(() => {
             const now = new Date();
-            const clockEl = document.getElementById("android-clock");
-            if (clockEl) clockEl.innerText = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            document.getElementById("android-clock").innerText = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         }, 1000);
         lucide.createIcons();
-
-        // Real-Time WebSocket Connection to NDRF Command Center
-        const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsUrl = `${proto}//${window.location.host}/ws`;
-        let ws;
-
-        function connectWS() {
-            try {
-                ws = new WebSocket(wsUrl);
-                ws.onopen = () => console.log("🟢 Connected to Live NDRF Disaster Network");
-                ws.onmessage = (evt) => {
-                    try {
-                        const msg = JSON.parse(evt.data);
-                        if (msg.type === "OPERATOR_DISPATCH_BROADCAST") {
-                            const banner = document.getElementById("citizen-dispatch-status-banner");
-                            const eta = document.getElementById("citizen-dispatch-eta");
-                            const txt = document.getElementById("citizen-dispatch-msg");
-                            if (banner) {
-                                banner.classList.remove("hidden");
-                                if (eta) eta.innerText = `ETA: ${msg.eta_mins || 8} MINS`;
-                                if (txt) txt.innerText = `NDRF Battalion dispatched to ${msg.zone_name || 'your sector'}. Rescue team is en route.`;
-                                if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
-                            }
-                        }
-                    } catch (e) {
-                        console.error("WS parse error:", e);
-                    }
-                };
-                ws.onclose = () => setTimeout(connectWS, 3000);
-            } catch (err) {
-                console.warn("WS connect notice:", err);
-            }
-        }
-        connectWS();
     </script>
 </body>
 </html>

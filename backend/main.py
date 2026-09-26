@@ -470,15 +470,32 @@ async def generate_situation_report():
 
 
 # --- Static Frontend Serving ---
-frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
-if os.path.exists(frontend_dir):
+frontend_candidates = [
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend")),
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "frontend")),
+    os.path.abspath(os.path.join(os.getcwd(), "frontend")),
+    os.path.abspath(os.path.join(os.getcwd(), "..", "frontend")),
+    os.path.abspath("/app/frontend"),
+]
+frontend_dir = None
+for cand in frontend_candidates:
+    if os.path.exists(cand) and (os.path.exists(os.path.join(cand, "index.html")) or os.path.exists(os.path.join(cand, "citizen.html"))):
+        frontend_dir = cand
+        break
+
+if frontend_dir:
     app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
     @app.get("/")
-    async def serve_index():
-        return FileResponse(os.path.join(frontend_dir, "index.html"))
+    async def serve_root(mode: Optional[str] = None):
+        """Serves the citizen mobile app by default (or NDRF if mode=ndrf)."""
+        if mode == "ndrf":
+            return FileResponse(os.path.join(frontend_dir, "index.html"))
+        return FileResponse(os.path.join(frontend_dir, "citizen.html" if os.path.exists(os.path.join(frontend_dir, "citizen.html")) else "index.html"))
 
     @app.get("/ndrf")
+    @app.get("/command")
+    @app.get("/admin")
     async def serve_ndrf():
         return FileResponse(os.path.join(frontend_dir, "index.html"))
 
@@ -497,6 +514,13 @@ if os.path.exists(frontend_dir):
     async def serve_sw():
         return FileResponse(os.path.join(frontend_dir, "sw.js"), media_type="application/javascript")
 
+    @app.get("/mobile-app.js")
+    async def serve_mobile_app_js():
+        return FileResponse(os.path.join(frontend_dir, "mobile-app.js"), media_type="application/javascript")
+
+    @app.get("/app.js")
+    async def serve_app_js():
+        return FileResponse(os.path.join(frontend_dir, "app.js"), media_type="application/javascript")
 
 
 if __name__ == "__main__":

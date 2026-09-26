@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQcast | National Disaster Intelligence Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        resq: {
+                            navy: "#0a192f",
+                            dark: "#070d1e",
+                            card: "#111c33",
+                            cardHover: "#182746",
+                            border: "#203354",
+                            critical: "#dc2626",
+                            warning: "#ea580c",
+                            watch: "#eab308",
+                            safe: "#16a34a",
+                            cyan: "#06b6d4",
+                            saffron: "#f97316"
+                        }
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        };
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet GIS CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #070d1e;
+            color: #f8fafc;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #203354; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #070d1e; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#070d1e] text-slate-100 antialiased overflow-x-hidden">
+
+    <!-- 1. TOP COMMAND & DUAL-MODE SWITCHER HEADER -->
+    <header class="bg-[#0b1426] border-b border-[#203354] px-5 py-2.5 flex items-center justify-between shadow-2xl sticky top-0 z-50">
+        <div class="flex items-center space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-700 to-orange-600 flex items-center justify-center text-xl shadow-lg border border-orange-400">
+                🛡️
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="font-black text-base tracking-tight text-white">ResQ<span class="text-cyan-400 font-black">cast</span></span>
+                    <span id="role-tag" class="text-[10px] bg-orange-500/20 text-orange-400 border border-orange-500/30 font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                        NDRF National Command
+                    </span>
+                    <span id="ws-badge" class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold px-2 py-0.5 rounded flex items-center space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="mono">LIVE TELEMETRY</span>
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-400 font-medium">Ministry of Earth Sciences (MoES) & National Disaster Response Force (NDRF)</p>
+            </div>
+        </div>
+
+        <!-- DUAL-MODE SWITCHER & ACTIONS -->
+        <div class="flex items-center space-x-3">
+            
+            <!-- Dual-Mode Web Toggle Switch -->
+            <div class="bg-[#111c33] p-1 rounded-xl border border-[#203354] flex items-center space-x-1 shadow-inner">
+                <button id="btn-ndrf-mode" onclick="switchViewMode('ndrf')" class="px-3.5 py-1.5 rounded-lg text-xs font-black transition flex items-center space-x-1.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow">
+                    <span>👮‍♂️</span>
+                    <span>NDRF Command Dashboard</span>
+                </button>
+                <button id="btn-citizen-mode" onclick="switchViewMode('citizen')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+                    <span>👥</span>
+                    <span>Citizen Public Portal</span>
+                </button>
+            </div>
+
+            <button onclick="openIngestionModal()" class="hidden md:flex px-3 py-1.5 rounded-lg text-xs font-bold bg-[#111c33] hover:bg-[#182746] border border-cyan-600/50 text-cyan-300 items-center space-x-1.5 shadow transition active:scale-95">
+                <i data-lucide="upload-cloud" class="w-4 h-4 text-cyan-400"></i>
+                <span>Inject Live Data</span>
+            </button>
+
+            <button onclick="triggerFlashFloodDemo()" class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white flex items-center space-x-1.5 shadow-xl border border-red-400 transition active:scale-95">
+                <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                <span>▶ RUN DISASTER DEMO</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: NDRF NATIONAL COMMAND WEB DASHBOARD                               -->
+    <!-- ========================================================================= -->
+    <div id="ndrf-view-container" class="flex-1 flex flex-col">
+        
+        <!-- 6 Operational KPI Stat Tiles -->
+        <div class="bg-[#091024] border-b border-[#203354] px-5 py-2.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+            <div class="bg-[#111c33] p-2.5 rounded-lg border border-[#203354] flex flex-col">
+                <span class="text-slate-400 text-[10px] font-bold uppercase">CRITICAL SECTORS</span>
+                <span id="stat-critical" class="text-lg font-black text-red-500 mono">2 Active</span>
+            </div>
+            <div class="bg-[#111c33] p-2.5 rounded-lg border border-[#203354] flex flex-col">
+                <span class="text-slate-400 text-[10px] font-bold uppercase">POPULATION AT RISK</span>
+                <span id="stat-population" class="text-lg font-black text-orange-400 mono">134,500</span>
+            </div>
+            <div class="bg-[#111c33] p-2.5 rounded-lg border border-[#203354] flex flex-col">
+                <span class="text-slate-400 text-[10px] font-bold uppercase">RESCUE BOATS READY</span>
+                <span class="text-lg font-black text-cyan-400 mono">8 / 12 Deployed</span>
+            </div>
+            <div class="bg-[#111c33] p-2.5 rounded-lg border border-[#203354] flex flex-col">
+                <span class="text-slate-400 text-[10px] font-bold uppercase">AIRBORNE DRONES</span>
+                <span class="text-lg font-black text-emerald-400 mono">4 Thermal SAR</span>
+            </div>
+            <div class="bg-[#111c33] p-2.5 rounded-lg border border-[#203354] flex flex-col">
+                <span class="text-slate-400 text-[10px] font-bold uppercase">FUSION INFERENCE</span>
+                <span class="text-lg font-black text-purple-400 mono">38ms (Real-Time)</span>
+            </div>
+            <div class="bg-[#111c33] p-2.5 rounded-lg border border-[#203354] flex flex-col">
+                <span class="text-slate-400 text-[10px] font-bold uppercase">UNCERTAINTY BOUND</span>
+                <span class="text-lg font-black text-amber-400 mono">±4.2% Calibrated</span>
+            </div>
+        </div>
+
+        <!-- Tactical Command Center Grid -->
+        <main class="flex-1 grid grid-cols-12 gap-3.5 p-3.5 overflow-hidden">
+
+            <!-- LEFT: Prioritized Operator Review Queue (Col 3) -->
+            <section class="col-span-12 lg:col-span-3 flex flex-col bg-[#0b1426] rounded-xl border border-[#203354] p-3.5 shadow-2xl space-y-3">
+                <div class="flex items-center justify-between border-b border-[#203354] pb-2.5">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-red-500"></i>
+                        <h2 class="font-extrabold text-sm text-slate-100">Operator Review Queue</h2>
+                    </div>
+                    <span id="queue-badge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">
+                        2 Critical
+                    </span>
+                </div>
+
+                <p class="text-[11px] text-slate-400">Ranked sectors requiring human dispatch authorization:</p>
+
+                <div id="zone-cards-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1"></div>
+
+                <button onclick="showSituationReportModal()" class="w-full py-2.5 bg-[#111c33] hover:bg-[#182746] border border-cyan-500/50 text-cyan-300 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow">
+                    <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+                    <span>Generate Executive Briefing (SitRep)</span>
+                </button>
+            </section>
+
+            <!-- CENTER: Leaflet GIS Map & Time Progression Scrubber (Col 6) -->
+            <section class="col-span-12 lg:col-span-6 flex flex-col bg-[#0b1426] rounded-xl border border-[#203354] p-3.5 shadow-2xl space-y-3">
+                <div class="flex items-center justify-between bg-[#111c33] px-3.5 py-2 rounded-lg border border-[#203354]">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="map" class="w-4 h-4 text-cyan-400"></i>
+                        <span class="text-xs font-bold text-slate-200">National River Basin GIS & Satellite Mask</span>
+                    </div>
+                    <div class="flex items-center space-x-3 text-[11px] text-slate-300">
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span><span>Critical (>75%)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>Warning (50-75%)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>Normal (<25%)</span></span>
+                    </div>
+                </div>
+
+                <div id="disaster-map" class="flex-1 min-h-[460px] rounded-lg border border-[#203354] overflow-hidden relative z-10"></div>
+
+                <!-- Disaster Progression Scrubber -->
+                <div class="bg-[#111c33] p-3.5 rounded-lg border border-[#203354] flex flex-col space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-200 flex items-center space-x-2">
+                            <i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
+                            <span>Disaster Progression Scrubber:</span>
+                        </span>
+                        <span id="time-slider-val" class="font-black text-cyan-400 mono bg-[#070d1e] px-3 py-1 rounded border border-cyan-800/60">
+                            T-0h (Current Telemetry)
+                        </span>
+                    </div>
+                    <input id="time-slider" type="range" min="0" max="24" step="6" value="0" 
+                        oninput="handleTimeSliderChange(this.value)"
+                        class="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                    <div class="flex justify-between text-[10px] text-slate-400 font-semibold px-1">
+                        <span>T-0h (Current)</span>
+                        <span>T+6h (Peak Inflow)</span>
+                        <span>T+12h (Crest Surge)</span>
+                        <span>T+18h (Downstream)</span>
+                        <span>T+24h (Receding)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT: Multimodal AI HUD & Uncertainty (Col 3) -->
+            <section class="col-span-12 lg:col-span-3 flex flex-col bg-[#0b1426] rounded-xl border border-[#203354] p-3.5 shadow-2xl space-y-3 overflow-y-auto custom-scrollbar">
+                <div class="flex items-center justify-between border-b border-[#203354] pb-2.5">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+                        <h2 class="font-extrabold text-sm text-slate-100">Multimodal AI Breakdown</h2>
+                    </div>
+                    <span id="selected-zone-badge" class="text-[10px] font-bold px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                        BHADRACHALAM
+                    </span>
+                </div>
+
+                <div id="fusion-detail-container" class="space-y-3 text-xs"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: CITIZEN PUBLIC SAFETY WEB APP (FULL-WIDTH WEB PORTAL)             -->
+    <!-- ========================================================================= -->
+    <div id="citizen-view-container" class="hidden flex-1 flex-col p-4 md:p-6 max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Emergency Evacuation Banner -->
+        <div class="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 text-white p-5 rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-red-400">
+            <div class="space-y-1">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-white text-red-700 text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse uppercase">
+                        🚨 RED ALERT: IMMEDIATE EVACUATION
+                    </span>
+                    <span class="text-xs text-red-100 font-medium">Issued by NDRF Incident Commander</span>
+                </div>
+                <h3 class="text-xl md:text-2xl font-black">Flash Flood Surge Warning in Bhadrachalam Basin</h3>
+                <p class="text-xs md:text-sm text-red-100">River Godavari has breached critical danger mark (16.4m). All residents in Sectors 1-4 must evacuate to relief shelters immediately.</p>
+            </div>
+            
+            <div class="flex items-center space-x-3 shrink-0">
+                <button onclick="alert('🚨 105dB ACOUSTIC EVACUATION BEACON ACTIVATED!')" class="px-4 py-2.5 bg-slate-950/80 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center space-x-2 shadow border border-white/20 active:scale-95 transition">
+                    <i data-lucide="volume-2" class="w-4 h-4 text-amber-400"></i>
+                    <span>Siren Beacon</span>
+                </button>
+                <button onclick="alert('🚨 SOS TRANSMITTED: Your live GPS coordinates have been sent to NDRF Commander Vikram Rathore (10th Battalion). Rescue boat dispatched!')" class="px-5 py-2.5 bg-white text-red-700 hover:bg-red-50 rounded-xl text-xs font-black flex items-center space-x-2 shadow-2xl active:scale-95 transition">
+                    <i data-lucide="radio" class="w-4 h-4 text-red-600 animate-ping"></i>
+                    <span>TRANSMIT EMERGENCY SOS</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3-Column Citizen Public Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Card 1: Personal Location Safety Status -->
+            <div class="bg-[#111c33] p-5 rounded-2xl border border-[#203354] shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-[#203354] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="map-pin" class="w-5 h-5 text-cyan-400"></i>
+                        <h4 class="font-bold text-sm text-white">Your Sector Safety Index</h4>
+                    </div>
+                    <span class="text-xs bg-red-500/20 text-red-400 font-extrabold px-2 py-0.5 rounded border border-red-500/30">CRITICAL</span>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs text-slate-400">Current GPS Sector:</span>
+                        <strong class="text-sm text-white">Bhadrachalam Lowland</strong>
+                    </div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs text-slate-400">Inundation Risk:</span>
+                        <strong class="text-2xl font-black text-red-500 mono">94%</strong>
+                    </div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs text-slate-400">Expected Flood Depth:</span>
+                        <strong class="text-sm text-cyan-400 mono">3.4 Meters</strong>
+                    </div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs text-slate-400">Time to Peak Inflow:</span>
+                        <strong class="text-sm text-amber-400 mono">3.5 Hours</strong>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-red-950/40 rounded-xl border border-red-800/40 text-xs text-red-200">
+                    ℹ️ <strong>Action Required:</strong> Avoid bridge crossings. Move elders and children to 2nd floor or designated shelters.
+                </div>
+            </div>
+
+            <!-- Card 2: Live 24h Hourly Rainfall Nowcast -->
+            <div class="bg-[#111c33] p-5 rounded-2xl border border-[#203354] shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-[#203354] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="cloud-rain" class="w-5 h-5 text-blue-400"></i>
+                        <h4 class="font-bold text-sm text-white">24-Hour Rainfall Nowcast</h4>
+                    </div>
+                    <span class="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded border border-blue-500/30">IMD DOPPLER</span>
+                </div>
+
+                <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
+                        <span class="text-slate-400 text-[10px] block">Now</span>
+                        <strong class="text-red-400 text-sm mono">68 mm/h</strong>
+                    </div>
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
+                        <span class="text-slate-400 text-[10px] block">+3h</span>
+                        <strong class="text-red-400 text-sm mono">85 mm/h</strong>
+                    </div>
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
+                        <span class="text-slate-400 text-[10px] block">+6h</span>
+                        <strong class="text-amber-400 text-sm mono">45 mm/h</strong>
+                    </div>
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
+                        <span class="text-slate-400 text-[10px] block">+12h</span>
+                        <strong class="text-emerald-400 text-sm mono">12 mm/h</strong>
+                    </div>
+                </div>
+
+                <div class="space-y-2 text-xs text-slate-300">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Wind Gusts:</span>
+                        <span class="font-bold">45 km/h (ENE)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Soil Saturation:</span>
+                        <span class="font-bold text-orange-400">92% (Zero Absorption)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">River Basin Inflow:</span>
+                        <span class="font-bold text-cyan-400">1.85M Cusecs</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Verified Relief Shelters & Evacuation Routes -->
+            <div class="bg-[#111c33] p-5 rounded-2xl border border-[#203354] shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-[#203354] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="home" class="w-5 h-5 text-emerald-400"></i>
+                        <h4 class="font-bold text-sm text-white">Nearest Verified Relief Shelters</h4>
+                    </div>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/30">ACTIVE</span>
+                </div>
+
+                <div class="space-y-2.5 text-xs">
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-emerald-500/40 flex items-center justify-between">
+                        <div>
+                            <strong class="text-white text-xs block">Govt Degree College Relief Camp</strong>
+                            <span class="text-slate-400 text-[10px]">0.8 km • Capacity: 450/600</span>
+                        </div>
+                        <span class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-extrabold">OPEN</span>
+                    </div>
+
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354] flex items-center justify-between">
+                        <div>
+                            <strong class="text-white text-xs block">Town Hall Evacuation Center</strong>
+                            <span class="text-slate-400 text-[10px]">1.4 km • Capacity: 320/500</span>
+                        </div>
+                        <span class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-extrabold">OPEN</span>
+                    </div>
+
+                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354] flex items-center justify-between">
+                        <div>
+                            <strong class="text-white text-xs block">Zilla Parishad High School</strong>
+                            <span class="text-slate-400 text-[10px]">2.1 km • Capacity: 180/400</span>
+                        </div>
+                        <span class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-extrabold">OPEN</span>
+                    </div>
+                </div>
+
+                <div class="text-center pt-1">
+                    <span class="text-[11px] text-slate-400">Emergency NDRF Helpline: <strong class="text-orange-400 font-bold">1078 / 112</strong></span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 4. INGESTION MODAL FOR JUDGES -->
+    <div id="ingest-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#0b1426] border border-[#203354] w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-[#203354] pb-3">
+                <div class="flex items-center space-x-2.5">
+                    <i data-lucide="database" class="w-5 h-5 text-cyan-400"></i>
+                    <h3 class="font-extrabold text-base text-white">Inject Live Telemetry / Satellite Scan</h3>
+                </div>
+                <button onclick="closeIngestionModal()" class="text-slate-400 hover:text-white text-2xl font-bold">✕</button>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Target Sector Basin</label>
+                    <select id="modal-zone-select" class="w-full bg-[#111c33] border border-[#203354] rounded-lg p-2.5 text-white font-medium">
+                        <option value="ZONE-AP-GODAVARI-01">Bhadrachalam - Godavari Basin</option>
+                        <option value="ZONE-DL-YAMUNA-02">Yamuna Floodplain - Delhi NCR</option>
+                        <option value="ZONE-AS-BRAHMAPUTRA-03">Kaziranga Corridor - Assam</option>
+                        <option value="ZONE-OD-MAHANADI-04">Mahanadi Delta - Cuttack</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Precipitation (mm/hr)</label>
+                        <input id="modal-rain-input" type="number" value="85.0" class="w-full bg-[#111c33] border border-[#203354] rounded-lg p-2 text-white mono">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">River Gauge Level (m)</label>
+                        <input id="modal-river-input" type="number" value="18.5" class="w-full bg-[#111c33] border border-[#203354] rounded-lg p-2 text-white mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Satellite Inundation (%)</label>
+                        <input id="modal-inundation-input" type="number" value="82.0" class="w-full bg-[#111c33] border border-[#203354] rounded-lg p-2 text-white mono">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Flood Depth (m)</label>
+                        <input id="modal-depth-input" type="number" value="3.8" class="w-full bg-[#111c33] border border-[#203354] rounded-lg p-2 text-white mono">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2.5 pt-3 border-t border-[#203354]">
+                <button onclick="closeIngestionModal()" class="px-4 py-2 bg-[#111c33] text-slate-300 hover:bg-[#182746] rounded-lg text-xs font-bold">Cancel</button>
+                <button onclick="submitModalTelemetry()" class="px-5 py-2 bg-cyan-600 text-white hover:bg-cyan-500 rounded-lg text-xs font-extrabold flex items-center space-x-1.5 shadow-lg">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    <span>Execute Multimodal Fusion</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. SITUATION REPORT MODAL (SITREP) -->
+    <div id="sitrep-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#0b1426] border border-[#203354] w-full max-w-2xl rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b border-[#203354] pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">📋</span>
+                    <h3 class="font-extrabold text-base text-white">NDRF Executive Situation Briefing (SitRep)</h3>
+                </div>
+                <button onclick="closeSituationReportModal()" class="text-slate-400 hover:text-white text-2xl font-bold">✕</button>
+            </div>
+            <div id="sitrep-content" class="space-y-4 text-xs text-slate-300"></div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="/static/app.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // Dual-Mode Web View Switcher
+        function switchViewMode(mode) {
+            const ndrfContainer = document.getElementById("ndrf-view-container");
+            const citizenContainer = document.getElementById("citizen-view-container");
+            const btnNdrf = document.getElementById("btn-ndrf-mode");
+            const btnCitizen = document.getElementById("btn-citizen-mode");
+            const roleTag = document.getElementById("role-tag");
+
+            if (mode === 'citizen') {
+                ndrfContainer.classList.add("hidden");
+                citizenContainer.classList.remove("hidden");
+                citizenContainer.classList.add("flex");
+
+                btnCitizen.className = "px-3.5 py-1.5 rounded-lg text-xs font-black transition flex items-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow";
+                btnNdrf.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center space-x-1.5";
+                roleTag.innerText = "Citizen Public Portal";
+                roleTag.className = "text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 font-extrabold px-2 py-0.5 rounded uppercase tracking-wider";
+            } else {
+                citizenContainer.classList.add("hidden");
+                citizenContainer.classList.remove("flex");
+                ndrfContainer.classList.remove("hidden");
+
+                btnNdrf.className = "px-3.5 py-1.5 rounded-lg text-xs font-black transition flex items-center space-x-1.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow";
+                btnCitizen.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center space-x-1.5";
+                roleTag.innerText = "NDRF National Command";
+                roleTag.className = "text-[10px] bg-orange-500/20 text-orange-400 border border-orange-500/30 font-extrabold px-2 py-0.5 rounded uppercase tracking-wider";
+                
+                if (window.map) setTimeout(() => window.map.invalidateSize(), 150);
+            }
+        }
+    </script>
+</body>
+</html>

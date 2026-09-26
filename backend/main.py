@@ -23,7 +23,7 @@ from models import (
     WeatherData,
     SensorReading,
 )
-from simulation import get_default_disaster_zones
+from simulation import get_default_disaster_zones, get_wildfire_disaster_zones
 from multimodal_engine import MultimodalFusionEngine, DisasterTimelineSimulator
 from live_fetcher import sync_all_zones_live_data
 
@@ -42,6 +42,7 @@ app.add_middleware(
 )
 
 # In-Memory State Store
+current_hazard_mode: str = "FLOOD"
 zones_db: Dict[str, DisasterZone] = {z.zone_id: z for z in get_default_disaster_zones()}
 operator_logs: List[Dict[str, Any]] = []
 active_websockets: List[WebSocket] = []
@@ -111,6 +112,48 @@ async def health_check():
         "service": "RakshaCast-Forge Multimodal AI",
         "active_zones": len(zones_db),
         "timestamp": time.time()
+    }
+
+
+@app.get("/api/disaster/hazard-mode")
+async def get_hazard_mode():
+    return {"hazard_mode": current_hazard_mode}
+
+
+@app.post("/api/disaster/hazard-mode/{mode}")
+async def set_hazard_mode(mode: str):
+    global current_hazard_mode, zones_db
+    mode_upper = mode.upper()
+    if mode_upper not in ["FLOOD", "WILDFIRE"]:
+        raise HTTPException(status_code=400, detail="Invalid hazard mode. Choose FLOOD or WILDFIRE.")
+    
+    current_hazard_mode = mode_upper
+    if mode_upper == "FLOOD":
+        new_zones = get_default_disaster_zones()
+    else:
+        new_zones = get_wildfire_disaster_zones()
+    
+    zones_db.clear()
+    for z in new_zones:
+        zones_db[z.zone_id] = z
+
+    # Broadcast full refresh snapshot to all connected dashboards
+    payload = {
+        "type": "INITIAL_SNAPSHOT",
+        "hazard_mode": current_hazard_mode,
+        "zones": [z.dict() for z in zones_db.values()],
+        "timestamp": time.time()
+    }
+    for ws in list(active_websockets):
+        try:
+            await ws.send_json(payload)
+        except Exception:
+            pass
+
+    return {
+        "status": "HAZARD_MODE_SWITCHED",
+        "hazard_mode": current_hazard_mode,
+        "active_zones": len(zones_db)
     }
 
 

@@ -182,11 +182,18 @@ class DisasterTimelineSimulator:
         forecast_score = min(100.0, round(base_zone.threat_score * multiplier, 1))
         forecast_depth = round(base_zone.flood_depth_meters * multiplier, 2)
         forecast_inundation = min(98.0, round(base_zone.satellite_inundation_pct * multiplier, 1))
+        forecast_hotspots = int(base_zone.thermal_hotspots_count * multiplier) if base_zone.thermal_hotspots_count else 0
+        forecast_pm25 = round(base_zone.pm25_aqi * multiplier, 1) if base_zone.pm25_aqi else 0.0
+        forecast_spread = round(base_zone.fire_spread_kmh * multiplier, 1) if base_zone.fire_spread_kmh else 0.0
         
         return {
             "hours_ahead": hours_ahead,
+            "disaster_type": base_zone.disaster_type.value if hasattr(base_zone.disaster_type, 'value') else str(base_zone.disaster_type),
             "forecast_threat_score": forecast_score,
             "forecast_flood_depth_meters": forecast_depth,
             "forecast_inundation_pct": forecast_inundation,
+            "forecast_hotspots_count": forecast_hotspots,
+            "forecast_pm25_aqi": forecast_pm25,
+            "forecast_fire_spread_kmh": forecast_spread,
             "risk_tier": "CRITICAL" if forecast_score >= 75 else ("WARNING" if forecast_score >= 50 else "WATCH")
         }

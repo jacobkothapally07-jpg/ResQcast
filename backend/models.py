@@ -85,11 +85,23 @@ class DisasterZone(BaseModel):
     threat_score: float  # 0.0 to 100.0
     threat_level: ThreatLevel
     uncertainty_margin: float
-    flood_depth_meters: float
-    satellite_inundation_pct: float
-    rainfall_rate_mm: float
-    river_level_meters: float
-    river_danger_mark_meters: float
+    flood_depth_meters: float = 0.0
+    satellite_inundation_pct: float = 0.0
+    rainfall_rate_mm: float = 0.0
+    river_level_meters: float = 0.0
+    river_danger_mark_meters: float = 0.0
+    disaster_type: DisasterType = DisasterType.FLOOD
+    
+    # Wildfire specific telemetry
+    thermal_hotspots_count: int = 0
+    pm25_aqi: float = 0.0
+    wind_direction_deg: float = 0.0
+    wind_speed_kmh: float = 0.0
+    fire_spread_kmh: float = 0.0
+    smoke_plume_coverage_sqkm: float = 0.0
+    
+    # Deep Evidence Streams (Visual, IoT/Weather, NLP, XAI)
+    evidence_streams: Optional[Dict[str, Any]] = None
     last_updated: float = Field(default_factory=time.time)
     fusion_details: Optional[MultimodalFusionResult] = None
     evacuation_status: str = "PENDING"  # PENDING, IN_PROGRESS, COMPLETED

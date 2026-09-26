@@ -703,18 +703,23 @@
 
             <div class="space-y-3.5 text-xs text-slate-300">
                 <!-- 1-Tap Browser Install Button -->
-                <button id="pwa-install-btn" onclick="triggerPWAInstall()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black flex items-center justify-center space-x-2 shadow-xl border border-emerald-400/40 transition active:scale-95">
+                <a href="/citizen" target="_blank" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black flex items-center justify-center space-x-2 shadow-xl border border-blue-400/40 transition active:scale-95 text-center">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    <span>🌐 Open Dedicated Phone Web App (/citizen)</span>
+                </a>
+
+                <button id="pwa-install-btn" onclick="triggerPWAInstall()" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black flex items-center justify-center space-x-2 shadow border border-emerald-400/40 transition active:scale-95">
                     <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>📲 Install Mobile App (1-Tap Direct Install)</span>
+                    <span>📲 Install as Phone App (PWA)</span>
                 </button>
 
                 <!-- QR Code Box -->
                 <div class="bg-[#111c33] p-4 rounded-xl border border-[#203354] flex flex-col items-center space-y-2 text-center">
                     <span class="text-[11px] font-bold text-cyan-300">Scan with iPhone / Android Camera:</span>
                     <div class="bg-white p-2.5 rounded-lg shadow-md">
-                        <img id="pwa-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://resqcast.onrender.com/?mode=citizen" alt="Scan QR Code to open on phone" class="w-36 h-36">
+                        <img id="pwa-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://resqcast.onrender.com/citizen" alt="Scan QR Code to open on phone" class="w-36 h-36">
                     </div>
-                    <p class="text-[10px] text-slate-400">Instantly opens the full Citizen Safety Platform on your smartphone</p>
+                    <p class="text-[10px] text-slate-400">Opens the 100% dedicated phone interface (<code class="text-cyan-300">/citizen</code>)</p>
                 </div>
 
                 <!-- Operating System Instructions -->
@@ -777,7 +782,7 @@
         function openDownloadModal() {
             const modal = document.getElementById("download-app-modal");
             if (!modal) return;
-            const currentUrl = window.location.origin + "/?mode=citizen";
+            const currentUrl = window.location.origin + "/citizen";
             const qrImg = document.getElementById("pwa-qr-img");
             if (qrImg) {
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUrl)}`;

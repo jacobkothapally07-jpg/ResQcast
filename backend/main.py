@@ -478,6 +478,17 @@ if os.path.exists(frontend_dir):
     async def serve_index():
         return FileResponse(os.path.join(frontend_dir, "index.html"))
 
+    @app.get("/ndrf")
+    async def serve_ndrf():
+        return FileResponse(os.path.join(frontend_dir, "index.html"))
+
+    @app.get("/citizen")
+    @app.get("/mobile")
+    @app.get("/app")
+    @app.get("/phone")
+    async def serve_citizen_app():
+        return FileResponse(os.path.join(frontend_dir, "citizen.html"))
+
     @app.get("/manifest.json")
     async def serve_manifest():
         return FileResponse(os.path.join(frontend_dir, "manifest.json"), media_type="application/manifest+json")

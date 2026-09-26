@@ -26,19 +26,31 @@ function initMap() {
     map = L.map("disaster-map", {
         center: [21.5, 82.0],
         zoom: 5,
-        zoomControl: true
+        zoomControl: true,
+        preferCanvas: true
     });
 
     // Default to ISRO Bhuvan Satellite
     setMapLayer("bhuvan");
+
+    setTimeout(() => {
+        if (map) map.invalidateSize();
+    }, 250);
+    setTimeout(() => {
+        if (map) map.invalidateSize();
+    }, 1000);
+
+    window.addEventListener("resize", () => {
+        if (map) map.invalidateSize();
+    });
 }
 
 function setMapLayer(layerType) {
     activeLayerType = layerType;
-    if (currentBaseLayer) {
+    if (currentBaseLayer && map.hasLayer(currentBaseLayer)) {
         map.removeLayer(currentBaseLayer);
     }
-    if (radarOverlayLayer) {
+    if (radarOverlayLayer && map.hasLayer(radarOverlayLayer)) {
         map.removeLayer(radarOverlayLayer);
         radarOverlayLayer = null;
     }
@@ -66,14 +78,14 @@ function setMapLayer(layerType) {
         } else {
             // Free Doppler precipitation tile fallback
             radarOverlayLayer = L.tileLayer("https://tilecache.rainviewer.com/v2/radar/nowcast_10m/256/{z}/{x}/{y}/2/1_1.png", {
-                opacity: 0.7,
+                opacity: 0.75,
                 attribution: "&copy; INSAT-3D Doppler Radar Feed"
             }).addTo(map);
         }
     } else if (layerType === "cartodem") {
-        currentBaseLayer = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-            attribution: "&copy; ISRO CartoDEM / OpenTopoMap",
-            maxZoom: 17
+        currentBaseLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
+            attribution: "&copy; ISRO CartoDEM / Topo Map",
+            maxZoom: 18
         }).addTo(map);
     } else if (layerType === "dark") {
         currentBaseLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
@@ -93,6 +105,10 @@ function setMapLayer(layerType) {
             openMapKeyModal();
             return;
         }
+    }
+
+    if (map) {
+        setTimeout(() => map.invalidateSize(), 150);
     }
 
     // Update Button Active Classes

@@ -1511,16 +1511,16 @@ function handleIncomingSyncEvent(event) {
 // CITIZEN SOS / EVACUATE DISPATCH -> ROUTED TO ADMIN / NDRF ONLY
 // =============================================================
 function submitSOSDistress() {
-    const name = document.getElementById("sos-name").value || STATE.citizenProfile.name;
-    const type = document.getElementById("sos-type").value;
-    const msg = document.getElementById("sos-msg").value || "Trapped citizen requesting extraction.";
+    const name = (document.getElementById("sos-name") && document.getElementById("sos-name").value) || STATE.citizenProfile.name;
+    const type = (document.getElementById("sos-type") && document.getElementById("sos-type").value) || "Rising Flood Water (Trapped)";
+    const msg = (document.getElementById("sos-msg") && document.getElementById("sos-msg").value) || "Trapped citizen requesting extraction.";
 
     const newSOS = {
         id: `SOS-${Math.floor(1000 + Math.random() * 8999)}`,
         userName: name,
         phone: STATE.citizenProfile.phone,
         emergencyType: type,
-        peopleCount: 4,
+        peopleCount: STATE.citizenProfile.familyMembersCount || 4,
         location: STATE.currentLocationName,
         lat: STATE.userCoords[0],
         lng: STATE.userCoords[1],
@@ -1537,7 +1537,27 @@ function submitSOSDistress() {
     STATE.sosQueue.unshift(newSOS);
     saveSettingsToStorage();
 
-    // Broadcast immediately across all connected devices (Laptops, Desktops, Command Centers)
+    // 1. Post to Backend Gateway for live NDRF National Command Reception
+    try {
+        fetch("/api/disaster/citizen-sos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                citizen_name: newSOS.userName,
+                phone: newSOS.phone,
+                latitude: newSOS.lat,
+                longitude: newSOS.lng,
+                zone_id: "ZONE-AP-GODAVARI-01",
+                zone_name: newSOS.location,
+                emergency_type: newSOS.emergencyType,
+                people_count: newSOS.peopleCount,
+                details: newSOS.message,
+                language: (STATE.selectedLanguage || "EN").toLowerCase()
+            })
+        }).catch(e => console.log("Citizen SOS sync:", e));
+    } catch (e) {}
+
+    // 2. Broadcast immediately across all connected devices (Laptops, Desktops, Command Centers)
     broadcastCrossDeviceEvent({
         type: "NEW_SOS_DISTRESS",
         sosRecord: newSOS
@@ -1557,7 +1577,7 @@ function requestEvacuationExtraction() {
         userName: STATE.citizenProfile.name,
         phone: STATE.citizenProfile.phone,
         emergencyType: "Evacuation Assistance (Cutoff Route)",
-        peopleCount: STATE.citizenProfile.familyMembersCount,
+        peopleCount: STATE.citizenProfile.familyMembersCount || 4,
         location: STATE.currentLocationName,
         lat: STATE.userCoords[0],
         lng: STATE.userCoords[1],
@@ -1574,7 +1594,27 @@ function requestEvacuationExtraction() {
     STATE.sosQueue.unshift(newSOS);
     saveSettingsToStorage();
 
-    // Broadcast to Laptop / NDRF Admin Command
+    // 1. Post to Backend Gateway for live NDRF National Command Reception
+    try {
+        fetch("/api/disaster/citizen-sos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                citizen_name: newSOS.userName,
+                phone: newSOS.phone,
+                latitude: newSOS.lat,
+                longitude: newSOS.lng,
+                zone_id: "ZONE-AP-GODAVARI-01",
+                zone_name: newSOS.location,
+                emergency_type: newSOS.emergencyType,
+                people_count: newSOS.peopleCount,
+                details: newSOS.message,
+                language: (STATE.selectedLanguage || "EN").toLowerCase()
+            })
+        }).catch(e => console.log("Evac SOS sync:", e));
+    } catch (e) {}
+
+    // 2. Broadcast to Laptop / NDRF Admin Command
     broadcastCrossDeviceEvent({
         type: "NEW_SOS_DISTRESS",
         sosRecord: newSOS

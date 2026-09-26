@@ -269,9 +269,72 @@ async def trigger_live_weather_sync():
     }
 
 
+class CitizenSOSRequest(BaseModel):
+    citizen_name: str = "Aarav Sharma"
+    phone: str = "+91 98765 43210"
+    latitude: float = 17.6689
+    longitude: float = 80.8936
+    zone_id: Optional[str] = "ZONE-AP-GODAVARI-01"
+    zone_name: Optional[str] = "Bhadrachalam"
+    emergency_type: str = "TRAPPED_WATER"  # TRAPPED_WATER, WILDFIRE_SMOKE, MEDICAL, EVACUATION_ASSISTANCE
+    people_count: int = 4
+    details: str = "Water entered ground floor, trapped on terrace with children."
+    language: str = "en"
+
+
+citizen_sos_db: List[Dict[str, Any]] = []
+
+
+@app.post("/api/disaster/citizen-sos")
+async def receive_citizen_sos(req: CitizenSOSRequest):
+    """Receives emergency SOS and incident reports directly from Citizen Mobile App."""
+    sos_id = f"SOS-{int(time.time()*1000)}"
+    sos_record = {
+        "sos_id": sos_id,
+        "timestamp": time.time(),
+        "citizen_name": req.citizen_name,
+        "phone": req.phone,
+        "latitude": req.latitude,
+        "longitude": req.longitude,
+        "zone_id": req.zone_id or (list(zones_db.keys())[0] if zones_db else "ZONE-01"),
+        "zone_name": req.zone_name or "Monitored Sector",
+        "emergency_type": req.emergency_type,
+        "people_count": req.people_count,
+        "details": req.details,
+        "language": req.language,
+        "status": "PENDING_OPERATOR_REVIEW"
+    }
+    citizen_sos_db.insert(0, sos_record)
+
+    # Broadcast live high-priority SOS alert to NDRF Command Dashboards
+    payload = {
+        "type": "CITIZEN_SOS_ALERT",
+        "sos": sos_record,
+        "timestamp": time.time()
+    }
+    for ws in list(active_websockets):
+        try:
+            await ws.send_json(payload)
+        except Exception:
+            pass
+
+    return {
+        "status": "RECEIVED_BY_NDRF_COMMAND",
+        "sos_id": sos_id,
+        "message": "Emergency SOS registered at NDRF National Command Center. Rescue unit assignment in progress.",
+        "assigned_battalion": "10th NDRF Battalion (Search & Rescue)"
+    }
+
+
+@app.get("/api/disaster/citizen-sos/active")
+async def list_active_citizen_sos():
+    """Lists recent citizen emergency SOS alerts for NDRF Triage."""
+    return citizen_sos_db[:25]
+
+
 @app.post("/api/disaster/actions/dispatch")
 async def dispatch_operator_action(req: OperatorActionRequest):
-    """Executes human operator triage decision (NDRF Dispatch / Evacuation Order)."""
+    """Executes human operator triage decision (NDRF Dispatch / Evacuation Order) and alerts citizens."""
     zone = zones_db.get(req.zone_id)
     if not zone:
         raise HTTPException(status_code=404, detail="Zone not found")
@@ -293,7 +356,29 @@ async def dispatch_operator_action(req: OperatorActionRequest):
     elif req.action_type == "MARK_RESOLVED":
         zone.evacuation_status = "COMPLETED"
 
+    # Mark corresponding citizen SOS as dispatched
+    for sos in citizen_sos_db:
+        if sos.get("zone_id") == req.zone_id:
+            sos["status"] = "DISPATCHED"
+
     await broadcast_zone_update(zone)
+
+    # Broadcast live dispatch notification to Citizen Mobile App
+    dispatch_payload = {
+        "type": "OPERATOR_DISPATCH_BROADCAST",
+        "action": action_record,
+        "zone_id": req.zone_id,
+        "zone_name": zone.zone_name,
+        "eta_mins": 8,
+        "battalion": "10th NDRF Battalion (Search & Rescue)",
+        "timestamp": time.time()
+    }
+    for ws in list(active_websockets):
+        try:
+            await ws.send_json(dispatch_payload)
+        except Exception:
+            pass
+
     return {"status": "SUCCESS", "action": action_record}
 
 
@@ -337,9 +422,13 @@ if os.path.exists(frontend_dir):
     async def serve_index():
         return FileResponse(os.path.join(frontend_dir, "index.html"))
 
-    @app.get("/mobile-app.js")
-    async def serve_mobile_js():
-        return FileResponse(os.path.join(frontend_dir, "mobile-app.js"), media_type="application/javascript")
+    @app.get("/manifest.json")
+    async def serve_manifest():
+        return FileResponse(os.path.join(frontend_dir, "manifest.json"), media_type="application/manifest+json")
+
+    @app.get("/sw.js")
+    async def serve_sw():
+        return FileResponse(os.path.join(frontend_dir, "sw.js"), media_type="application/javascript")
 
 
 

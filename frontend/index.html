@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ResQcast | National Disaster Intelligence Platform</title>
+    
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0b1426">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ResQcast">
+    <meta name="mobile-web-app-capable" content="yes">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -99,7 +107,13 @@
             <!-- AI Benchmark Modal Trigger -->
             <button onclick="openBenchmarkModal()" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/50 text-purple-200 flex items-center space-x-1.5 shadow transition active:scale-95">
                 <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-purple-300"></i>
-                <span>📊 AI Evaluation & Baselines</span>
+                <span>📊 AI Evaluation</span>
+            </button>
+
+            <!-- Download Mobile App Button -->
+            <button onclick="openDownloadModal()" class="px-3 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center space-x-1.5 shadow-lg border border-emerald-400/40 transition active:scale-95">
+                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                <span>📲 Download App</span>
             </button>
             
             <!-- Dual-Mode Web Toggle Switch -->
@@ -130,6 +144,34 @@
             </button>
         </div>
     </header>
+
+    <!-- LIVE INCOMING CITIZEN SOS ALERT TOAST (REAL-TIME CONNECTIVITY) -->
+    <div id="live-sos-toast" class="fixed top-16 right-5 z-50 max-w-sm md:max-w-md w-full bg-[#180909] border-2 border-red-500 rounded-2xl p-4 shadow-2xl hidden flex-col space-y-2.5 transition-all">
+        <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                <span class="text-xs font-black text-red-400 uppercase tracking-wider">🚨 INCOMING CITIZEN SOS</span>
+            </div>
+            <button onclick="dismissSosToast()" class="text-slate-400 hover:text-white font-bold text-sm p-1">✕</button>
+        </div>
+        <div class="text-xs text-slate-200 space-y-1">
+            <p><strong id="sos-toast-name" class="text-white">Aarav Sharma</strong> (<span id="sos-toast-phone" class="text-cyan-300 mono">+91 98765 43210</span>) transmitted emergency beacon:</p>
+            <p class="text-[11px] text-amber-200 italic bg-red-950/60 p-2 rounded-lg border border-red-900/50" id="sos-toast-details">"Water entered ground floor, trapped on terrace with 4 family members."</p>
+            <div class="flex items-center justify-between pt-1 text-[10px] text-slate-400">
+                <span>Sector: <strong id="sos-toast-sector" class="text-white">Bhadrachalam</strong></span>
+                <span>GPS: <strong id="sos-toast-gps" class="mono text-cyan-300">17.6689°N, 80.8936°E</strong></span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+            <button id="sos-toast-dispatch-btn" onclick="dispatchSosDirectly()" class="flex-1 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold rounded-lg text-xs shadow flex items-center justify-center space-x-1.5 active:scale-95 transition">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                <span>🚨 Dispatch NDRF Battalion</span>
+            </button>
+            <button onclick="dismissSosToast()" class="px-3 py-2 bg-[#111c33] text-slate-300 text-xs font-bold rounded-lg border border-[#203354]">
+                Dismiss
+            </button>
+        </div>
+    </div>
 
     <!-- MICROSOFT ECOSYSTEM BADGE SUB-HEADER -->
     <div class="bg-[#060d1d] border-b border-[#203354] px-5 py-1.5 flex items-center justify-between text-[11px] text-slate-400 overflow-x-auto shadow-inner">
@@ -296,12 +338,18 @@
             <div class="flex items-center space-x-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span class="font-bold text-slate-200">RakshaCast Citizen Suite:</span>
-                <span class="text-slate-400">All Maps, Radar, AI Precaution, NavIC & SOS</span>
+                <span class="text-slate-400">Connected to NDRF Command Post</span>
             </div>
-            <button onclick="navigate('demo')" class="px-2.5 py-1 rounded font-extrabold bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow flex items-center space-x-1 text-[11px] active:scale-95 transition">
-                <i data-lucide="play-circle" class="w-3.5 h-3.5"></i>
-                <span>Pipeline Demo</span>
-            </button>
+            <div class="flex items-center space-x-1.5">
+                <button onclick="openDownloadModal()" class="px-2.5 py-1 rounded font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow flex items-center space-x-1 text-[11px] active:scale-95 transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Get App</span>
+                </button>
+                <button onclick="navigate('demo')" class="px-2.5 py-1 rounded font-extrabold bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow flex items-center space-x-1 text-[11px] active:scale-95 transition">
+                    <i data-lucide="play-circle" class="w-3.5 h-3.5"></i>
+                    <span>Demo</span>
+                </button>
+            </div>
         </div>
 
         <!-- SMARTPHONE DEVICE WRAPPER (COMPLETE RAKSHACAST PLATFORM) -->
@@ -333,6 +381,20 @@
                             👤 Citizen View
                         </button>
                     </div>
+                </div>
+
+                <!-- Live NDRF Connected Dispatch Status Banner -->
+                <div id="citizen-dispatch-status-banner" class="hidden m-2 bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-950 border border-emerald-500/60 rounded-xl p-2.5 text-white space-y-1 shadow-lg shrink-0">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span class="text-[11px] font-black text-emerald-400 uppercase tracking-wider">NDRF Rescue Dispatched!</span>
+                        </div>
+                        <span id="citizen-dispatch-eta" class="text-[9px] bg-emerald-900/80 text-emerald-200 px-1.5 py-0.5 rounded font-mono font-extrabold">ETA: 8 MINS</span>
+                    </div>
+                    <p class="text-[10px] text-slate-200 leading-snug" id="citizen-dispatch-msg">
+                        10th NDRF Battalion boat unit is en route to your GPS coordinates. Stay in high elevation.
+                    </p>
                 </div>
 
                 <!-- Screen Viewport for all RakshaCast Screens (Nowcast, Maps, Demo, Evacuate, Alerts, NavIC, etc.) -->
@@ -626,14 +688,111 @@
             <div class="flex items-center justify-end space-x-2.5 pt-3 border-t border-[#203354]">
                 <button onclick="closeSituationReportModal()" class="px-4 py-2 bg-[#111c33] text-slate-300 hover:bg-[#182746] rounded-lg text-xs font-bold">Dismiss</button>
                 <button onclick="window.print()" class="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-lg text-xs font-extrabold shadow flex items-center space-x-1.5">
-                    <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span>Export / Print Briefing</span>
+    <!-- 10. MOBILE APP DOWNLOAD & QR CODE MODAL -->
+    <div id="download-app-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#0b1426] border border-[#203354] w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-[#203354] pb-3">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                        <i data-lucide="smartphone" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-extrabold text-base text-white">Download ResQcast on Phone</h3>
+                </div>
+                <button onclick="closeDownloadModal()" class="text-slate-400 hover:text-white text-2xl font-bold p-1">✕</button>
+            </div>
+
+            <div class="space-y-3.5 text-xs text-slate-300">
+                <!-- 1-Tap Browser Install Button -->
+                <button id="pwa-install-btn" onclick="triggerPWAInstall()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black flex items-center justify-center space-x-2 shadow-xl border border-emerald-400/40 transition active:scale-95">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>📲 Install Mobile App (1-Tap Direct Install)</span>
                 </button>
+
+                <!-- QR Code Box -->
+                <div class="bg-[#111c33] p-4 rounded-xl border border-[#203354] flex flex-col items-center space-y-2 text-center">
+                    <span class="text-[11px] font-bold text-cyan-300">Scan with iPhone / Android Camera:</span>
+                    <div class="bg-white p-2.5 rounded-lg shadow-md">
+                        <img id="pwa-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://resqcast.onrender.com/?mode=citizen" alt="Scan QR Code to open on phone" class="w-36 h-36">
+                    </div>
+                    <p class="text-[10px] text-slate-400">Instantly opens the full Citizen Safety Platform on your smartphone</p>
+                </div>
+
+                <!-- Operating System Instructions -->
+                <div class="space-y-2 text-[11px]">
+                    <div class="bg-[#070d1e] p-2.5 rounded-lg border border-[#203354]">
+                        <strong class="text-emerald-400 block font-bold mb-0.5">🍏 iPhone / iPad (Safari):</strong>
+                        <span>Tap the <strong>Share</strong> icon at bottom &gt; Select <strong>"Add to Home Screen"</strong>.</span>
+                    </div>
+                    <div class="bg-[#070d1e] p-2.5 rounded-lg border border-[#203354]">
+                        <strong class="text-cyan-400 block font-bold mb-0.5">🤖 Android (Chrome):</strong>
+                        <span>Tap 3 dots menu &gt; Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end pt-2 border-t border-[#203354]">
+                <button onclick="closeDownloadModal()" class="px-5 py-2 bg-[#111c33] text-slate-300 hover:bg-[#182746] rounded-lg text-xs font-bold border border-[#203354]">Close</button>
             </div>
         </div>
     </div>
-    <script src="/static/app.js?v=20260926_8"></script>
-    <script src="/static/mobile-app.js?v=20260926_8"></script>
+
+    <!-- Application Scripts -->
+    <script src="/static/app.js?v=20260926_9"></script>
+    <script src="/static/mobile-app.js?v=20260926_9"></script>
+    <script>
+        // Register Service Worker for PWA Support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    console.log('ResQcast ServiceWorker registered with scope:', reg.scope);
+                }).catch((err) => {
+                    console.log('ServiceWorker registration failed:', err);
+                });
+            });
+        }
+
+        // PWA Install Prompt Listener
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        function triggerPWAInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the PWA install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alert("To install on your phone:\n\n1. Open https://resqcast.onrender.com on your phone browser\n2. Tap 'Share' (iOS) or 'Menu' (Android) > 'Add to Home Screen'!");
+            }
+        }
+
+        function openDownloadModal() {
+            const modal = document.getElementById("download-app-modal");
+            if (!modal) return;
+            const currentUrl = window.location.origin + "/?mode=citizen";
+            const qrImg = document.getElementById("pwa-qr-img");
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUrl)}`;
+            }
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            lucide.createIcons();
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById("download-app-modal");
+            if (!modal) return;
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
     <script>
         lucide.createIcons();
 

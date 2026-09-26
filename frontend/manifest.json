@@ -1,0 +1,40 @@
+{
+  "name": "ResQcast | National Disaster Intelligence Platform",
+  "short_name": "ResQcast",
+  "description": "Real-Time AI Disaster Intelligence, Flood & Wildfire Forecasting, Evacuation Routes, and NDRF Citizen SOS",
+  "start_url": "/?mode=citizen",
+  "display": "standalone",
+  "background_color": "#070d1e",
+  "theme_color": "#0b1426",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a192f'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='55'>🛡️</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a192f'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='55'>🛡️</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "description": "Broadcast Emergency SOS to NDRF",
+      "url": "/?mode=citizen&tab=alerts",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚨</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Evacuation Routes",
+      "short_name": "Evacuate",
+      "description": "Safe Elevation Routes & Shelters",
+      "url": "/?mode=citizen&tab=evacuate",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>", "sizes": "96x96" }]
+    }
+  ]
+}

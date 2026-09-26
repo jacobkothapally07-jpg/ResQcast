@@ -52,8 +52,8 @@ function setMapLayer(layerType) {
             maxZoom: 19
         }).addTo(map);
     } else if (layerType === "insat") {
-        currentBaseLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-            attribution: "&copy; ISRO INSAT-3D MOSDAC &copy; OpenStreetMap",
+        currentBaseLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+            attribution: "&copy; ISRO INSAT-3D MOSDAC &copy; ESRI",
             maxZoom: 18
         }).addTo(map);
 
@@ -66,7 +66,7 @@ function setMapLayer(layerType) {
         } else {
             // Free Doppler precipitation tile fallback
             radarOverlayLayer = L.tileLayer("https://tilecache.rainviewer.com/v2/radar/nowcast_10m/256/{z}/{x}/{y}/2/1_1.png", {
-                opacity: 0.65,
+                opacity: 0.7,
                 attribution: "&copy; INSAT-3D Doppler Radar Feed"
             }).addTo(map);
         }
@@ -76,8 +76,8 @@ function setMapLayer(layerType) {
             maxZoom: 17
         }).addTo(map);
     } else if (layerType === "dark") {
-        currentBaseLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-            attribution: "&copy; CARTO Tactical Dark &copy; OpenStreetMap",
+        currentBaseLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+            attribution: "&copy; Tactical Dark GIS &copy; ESRI",
             maxZoom: 18
         }).addTo(map);
     } else if (layerType === "mapbox") {

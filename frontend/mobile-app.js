@@ -1,5 +1,5 @@
 /**
- * RakshaCast - National Disaster Early Warning & Resilience Platform
+ * ResQcast - National Disaster Early Warning & Resilience Platform
  * Ministry of Earth Sciences (MoES) & India Meteorological Department (IMD)
  * 
  * Includes:
@@ -432,10 +432,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js")
             .then(reg => {
-                console.log("👷 [RakshaCast SW] Service Worker active & listening for background push:", reg.scope);
+                console.log("👷 [ResQcast SW] Service Worker active & listening for background push:", reg.scope);
             })
             .catch(err => {
-                console.warn("[RakshaCast SW] Registration failed:", err);
+                console.warn("[ResQcast SW] Registration failed:", err);
             });
     }
     
@@ -729,7 +729,7 @@ function showXAIDiagnosticsModal() {
                     <span class="px-2 py-0.5 rounded-full bg-indigo-200/70 text-indigo-900 text-[9px] font-mono">38ms Inference</span>
                 </div>
                 <p class="text-[10px] text-indigo-900 leading-relaxed">
-                    Traditional physics-based Numerical Weather Prediction (NWP) models require 6–12 hour simulation runs. RakshaCast's deep learning transformer extracts multivariate precursors in <b>38 milliseconds</b>, delivering actionable <b>2 to 6-hour lead time</b>.
+                    Traditional physics-based Numerical Weather Prediction (NWP) models require 6–12 hour simulation runs. ResQcast's deep learning transformer extracts multivariate precursors in <b>38 milliseconds</b>, delivering actionable <b>2 to 6-hour lead time</b>.
                 </p>
             </div>
 
@@ -1215,10 +1215,10 @@ function initCrossDeviceSync() {
             });
 
             client.on("connect", () => {
-                console.log("🌐 [RakshaCast Sync] Connected to Live Real-Time Emergency Mesh Gateway");
+                console.log("🌐 [ResQcast Sync] Connected to Live Real-Time Emergency Mesh Gateway");
                 STATE.liveSync.connected = true;
                 client.subscribe(SYNC_TOPIC, { qos: 0 }, (err) => {
-                    if (!err) console.log("📡 [RakshaCast Sync] Subscribed to emergency dispatch channel:", SYNC_TOPIC);
+                    if (!err) console.log("📡 [ResQcast Sync] Subscribed to emergency dispatch channel:", SYNC_TOPIC);
                 });
             });
 
@@ -1228,18 +1228,18 @@ function initCrossDeviceSync() {
                         const event = JSON.parse(payload.toString());
                         handleIncomingSyncEvent(event);
                     } catch(err) {
-                        console.warn("[RakshaCast Sync] Error parsing sync packet:", err);
+                        console.warn("[ResQcast Sync] Error parsing sync packet:", err);
                     }
                 }
             });
 
             client.on("error", (err) => {
-                console.warn("[RakshaCast Sync] WebSocket reconnecting:", err.message);
+                console.warn("[ResQcast Sync] WebSocket reconnecting:", err.message);
             });
 
             STATE.liveSync.client = client;
         } catch(e) {
-            console.warn("[RakshaCast Sync] Could not init MQTT client:", e);
+            console.warn("[ResQcast Sync] Could not init MQTT client:", e);
         }
     }
 }
@@ -1260,7 +1260,7 @@ function broadcastCrossDeviceEvent(event) {
     if (STATE.liveSync.client && STATE.liveSync.client.connected) {
         try {
             STATE.liveSync.client.publish(SYNC_TOPIC, JSON.stringify(event));
-            console.log("🚀 [RakshaCast Sync] Broadcasted distress event across cloud WebSocket mesh:", event.type);
+            console.log("🚀 [ResQcast Sync] Broadcasted distress event across cloud WebSocket mesh:", event.type);
         } catch(e) {}
     }
 }
@@ -1429,11 +1429,11 @@ function handleIncomingSyncEvent(event) {
     if (event.originId === window.__RAKSHACAST_CLIENT_ID__) return; // ignore self-broadcast
 
     if (event.type === "DEMO_EMERGENCY_TRIGGERED") {
-        console.log("🚨 [RakshaCast Sync] Received Live Emergency Broadcast from Laptop Presenter:", event);
+        console.log("🚨 [ResQcast Sync] Received Live Emergency Broadcast from Laptop Presenter:", event);
         showLiveCitizenEmergencyModal(event);
         showToast(`🚨 INCOMING EMERGENCY ALERT: ${event.title}`, "critical");
     } else if (event.type === "DEMO_EMERGENCY_RESET") {
-        console.log("↻ [RakshaCast Sync] Resetting Active Emergency from Laptop Presenter");
+        console.log("↻ [ResQcast Sync] Resetting Active Emergency from Laptop Presenter");
         stopEmergencySirenTone();
         closeModal();
         showToast("↻ Emergency Status Cleared by Presenter", "info");
@@ -2770,7 +2770,7 @@ function renderCitizenProfileView() {
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center space-y-1">
                 <p class="text-xs font-bold text-blue-950">Safety Service Notice</p>
                 <p class="text-[10px] text-blue-900 leading-relaxed">
-                    “RakshaCast alerts are an additional safety service and do not replace official emergency services.”
+                    “ResQcast alerts are an additional safety service and do not replace official emergency services.”
                 </p>
             </div>
 
@@ -3897,7 +3897,7 @@ function toggleSetting(key, val) {
                 if (permission === "granted") {
                     showToast("🔔 Background Push Notifications Enabled!", "success");
                     dispatchSystemPushNotification(
-                        "🚨 RakshaCast Early Warning Network",
+                        "🚨 ResQcast Early Warning Network",
                         "Push alerts active. You will receive critical cloudburst & flood alerts even when the app is minimized."
                     );
                 } else {

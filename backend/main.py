@@ -1,5 +1,5 @@
 """
-RakshaCast-Forge FastAPI Server Entrypoint
+ResQcast-Forge FastAPI Server Entrypoint
 Delivers Unified REST API, Real-Time WebSockets, and Multimodal Disaster Intelligence.
 """
 
@@ -36,7 +36,7 @@ from live_fetcher import (
 )
 
 app = FastAPI(
-    title="RakshaCast-Forge | Multimodal AI Disaster Intelligence Platform",
+    title="ResQcast-Forge | Multimodal AI Disaster Intelligence Platform",
     description="Real-Time Flood & Wildfire Forecasting, Satellite Vision Fusion, and Human Operator Triage Queue",
     version="2.0.0",
 )
@@ -123,7 +123,7 @@ async def broadcast_zone_update(zone: DisasterZone):
 async def health_check():
     return {
         "status": "OPERATIONAL",
-        "service": "RakshaCast-Forge Multimodal AI",
+        "service": "ResQcast-Forge Multimodal AI",
         "active_zones": len(zones_db),
         "timestamp": time.time()
     }

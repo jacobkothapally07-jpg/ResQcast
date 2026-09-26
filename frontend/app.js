@@ -658,3 +658,103 @@ async function syncLiveTelemetryFeeds() {
         console.error("Live weather sync error:", e);
     }
 }
+
+// --- 14. CITIZEN MOBILE APP CONTROLS ---
+let sirenOscillator = null;
+let sirenAudioCtx = null;
+let sirenInterval = null;
+
+function toggleCitizenLayout(mode) {
+    const phoneWrapper = document.getElementById("citizen-phone-wrapper");
+    const webWrapper = document.getElementById("citizen-web-wrapper");
+    const btnPhone = document.getElementById("btn-citizen-phone-mode");
+    const btnWeb = document.getElementById("btn-citizen-web-mode");
+
+    if (mode === "phone") {
+        phoneWrapper.classList.remove("hidden");
+        phoneWrapper.classList.add("flex");
+        webWrapper.classList.add("hidden");
+        webWrapper.classList.remove("flex");
+        btnPhone.className = "px-3 py-1 rounded font-bold bg-blue-600 text-white shadow flex items-center space-x-1";
+        btnWeb.className = "px-3 py-1 rounded font-bold text-slate-400 hover:text-white flex items-center space-x-1";
+    } else {
+        phoneWrapper.classList.add("hidden");
+        phoneWrapper.classList.remove("flex");
+        webWrapper.classList.remove("hidden");
+        webWrapper.classList.add("flex");
+        btnWeb.className = "px-3 py-1 rounded font-bold bg-blue-600 text-white shadow flex items-center space-x-1";
+        btnPhone.className = "px-3 py-1 rounded font-bold text-slate-400 hover:text-white flex items-center space-x-1";
+    }
+}
+
+function toggleEvacuationSiren() {
+    const btnText = document.getElementById("siren-btn-text");
+    if (sirenOscillator) {
+        try {
+            sirenOscillator.stop();
+            sirenOscillator.disconnect();
+        } catch (e) {}
+        sirenOscillator = null;
+        if (sirenInterval) clearInterval(sirenInterval);
+        if (btnText) btnText.innerText = "Siren Beacon";
+        alert("🔕 Acoustic Evacuation Siren Deactivated.");
+    } else {
+        try {
+            sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            sirenOscillator = sirenAudioCtx.createOscillator();
+            const gain = sirenAudioCtx.createGain();
+            sirenOscillator.type = "sawtooth";
+            sirenOscillator.frequency.setValueAtTime(650, sirenAudioCtx.currentTime);
+            gain.gain.setValueAtTime(0.12, sirenAudioCtx.currentTime);
+            sirenOscillator.connect(gain);
+            gain.connect(sirenAudioCtx.destination);
+            sirenOscillator.start();
+
+            let high = false;
+            sirenInterval = setInterval(() => {
+                if (!sirenOscillator) return;
+                high = !high;
+                sirenOscillator.frequency.setTargetAtTime(high ? 920 : 580, sirenAudioCtx.currentTime, 0.1);
+            }, 380);
+
+            if (btnText) btnText.innerText = "Stop Siren";
+            alert("🔊 105dB ACOUSTIC EVACUATION BEACON ACTIVATED THROUGH AUDIO SYSTEM!");
+        } catch (e) {
+            alert("🚨 105dB ACOUSTIC EVACUATION BEACON ACTIVATED!");
+        }
+    }
+}
+
+function transmitCitizenSOS() {
+    alert("🚨 EMERGENCY SOS BROADCAST SENT!\n\n• Live GPS Pin: 17.6689°N, 80.8936°E (Bhadrachalam)\n• Transmitted to: NDRF 10th Battalion Command Post\n• Inundation Depth: 3.4 Meters\n• Status: Rescue Zodiac Boat Dispatched (ETA 12 mins)");
+}
+
+const LANGUAGE_ADVISORIES = {
+    en: {
+        badge: "RED ALERT: EVACUATE",
+        title: "Flash Flood Surge Warning",
+        desc: "River Godavari has breached 16.4m danger level. Evacuate to high ground immediately."
+    },
+    hi: {
+        badge: "रेड अलर्ट: तुरंत सुरक्षित स्थान पर जाएं",
+        title: "अचानक बाढ़ की चेतावनी (गोदावरी बेसिन)",
+        desc: "गोदावरी नदी खतरे के निशान (16.4m) से ऊपर बह रही है। तुरंत नजदीकी राहत शिविर में पहुंचें।"
+    },
+    te: {
+        badge: "రెడ్ అలర్ట్: వెంటనే ఖాళీ చేయండి",
+        title: "వరద ముంపు హెచ్చరిక (భద్రాచలం)",
+        desc: "గోదావరి నది ప్రమాద స్థాయిని (16.4 మీ) దాటింది. వెంటనే పునరావాస కేంద్రాలకు వెళ్లండి."
+    },
+    bn: {
+        badge: "রেড অ্যালার্ট: অবিলম্বে নিরাপদ স্থানে যান",
+        title: "আকস্মিক বন্যা সতর্কতা",
+        desc: "নদীর জল বিপদসীমার উপরে প্রবাহিত হচ্ছে। অবিলম্বে নিকটবর্তী ত্রাণ শিবিরে পৌঁছান।"
+    }
+};
+
+function changeCitizenLanguage(lang) {
+    const adv = LANGUAGE_ADVISORIES[lang] || LANGUAGE_ADVISORIES.en;
+    document.getElementById("lang-alert-badge").innerText = adv.badge;
+    document.getElementById("lang-alert-title").innerText = adv.title;
+    document.getElementById("lang-alert-desc").innerText = adv.desc;
+}

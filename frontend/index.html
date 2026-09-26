@@ -247,158 +247,212 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 2: CITIZEN PUBLIC SAFETY WEB APP (FULL-WIDTH WEB PORTAL)             -->
     <!-- ========================================================================= -->
-    <div id="citizen-view-container" class="hidden flex-1 flex-col p-4 md:p-6 max-w-7xl mx-auto w-full space-y-6">
+    <!-- VIEW 2: CITIZEN PUBLIC SAFETY MOBILE WEB APP (DUAL DEVICE / PORTAL MODES)  -->
+    <!-- ========================================================================= -->
+    <div id="citizen-view-container" class="hidden flex-1 flex-col items-center p-4 md:p-6 w-full space-y-4">
         
-        <!-- Emergency Evacuation Banner -->
-        <div class="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 text-white p-5 rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-red-400">
-            <div class="space-y-1">
-                <div class="flex items-center space-x-2">
-                    <span class="bg-white text-red-700 text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse uppercase">
-                        🚨 RED ALERT: IMMEDIATE EVACUATION
-                    </span>
-                    <span class="text-xs text-red-100 font-medium">Issued by NDRF Incident Commander</span>
-                </div>
-                <h3 class="text-xl md:text-2xl font-black">Flash Flood Surge Warning in Bhadrachalam Basin</h3>
-                <p class="text-xs md:text-sm text-red-100">River Godavari has breached critical danger mark (16.4m). All residents in Sectors 1-4 must evacuate to relief shelters immediately.</p>
+        <!-- Citizen View Format Switcher (Phone App vs Full Portal) -->
+        <div class="flex items-center justify-between max-w-4xl w-full bg-[#111c33] px-4 py-2 rounded-xl border border-[#203354] text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-bold text-slate-200">Citizen Public Mode:</span>
+                <span class="text-slate-400">Offline-Ready PWA Emergency Interface</span>
             </div>
-            
-            <div class="flex items-center space-x-3 shrink-0">
-                <button onclick="alert('🚨 105dB ACOUSTIC EVACUATION BEACON ACTIVATED!')" class="px-4 py-2.5 bg-slate-950/80 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center space-x-2 shadow border border-white/20 active:scale-95 transition">
-                    <i data-lucide="volume-2" class="w-4 h-4 text-amber-400"></i>
-                    <span>Siren Beacon</span>
+            <div class="flex items-center space-x-1.5 bg-[#070d1e] p-1 rounded-lg border border-[#203354]">
+                <button id="btn-citizen-phone-mode" onclick="toggleCitizenLayout('phone')" class="px-3 py-1 rounded font-bold bg-blue-600 text-white shadow flex items-center space-x-1">
+                    <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                    <span>📱 Smartphone App</span>
                 </button>
-                <button onclick="alert('🚨 SOS TRANSMITTED: Your live GPS coordinates have been sent to NDRF Commander Vikram Rathore (10th Battalion). Rescue boat dispatched!')" class="px-5 py-2.5 bg-white text-red-700 hover:bg-red-50 rounded-xl text-xs font-black flex items-center space-x-2 shadow-2xl active:scale-95 transition">
-                    <i data-lucide="radio" class="w-4 h-4 text-red-600 animate-ping"></i>
-                    <span>TRANSMIT EMERGENCY SOS</span>
+                <button id="btn-citizen-web-mode" onclick="toggleCitizenLayout('web')" class="px-3 py-1 rounded font-bold text-slate-400 hover:text-white flex items-center space-x-1">
+                    <i data-lucide="layout" class="w-3.5 h-3.5"></i>
+                    <span>💻 Web Portal</span>
                 </button>
             </div>
         </div>
 
-        <!-- 3-Column Citizen Public Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- Card 1: Personal Location Safety Status -->
-            <div class="bg-[#111c33] p-5 rounded-2xl border border-[#203354] shadow-xl space-y-4">
-                <div class="flex items-center justify-between border-b border-[#203354] pb-3">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="map-pin" class="w-5 h-5 text-cyan-400"></i>
-                        <h4 class="font-bold text-sm text-white">Your Sector Safety Index</h4>
+        <!-- SMARTPHONE DEVICE WRAPPER (MOBILE APP VIEW) -->
+        <div id="citizen-phone-wrapper" class="flex justify-center w-full py-2">
+            <div class="w-full max-w-[400px] bg-slate-950 rounded-[48px] p-3 shadow-2xl border-4 border-slate-700/80 relative ring-1 ring-white/10">
+                
+                <!-- Phone Top Dynamic Island & Status Bar -->
+                <div class="bg-black text-white px-6 pt-2 pb-1.5 rounded-t-[38px] flex items-center justify-between text-[11px] font-semibold select-none border-b border-white/5">
+                    <span>9:41</span>
+                    <div class="w-20 h-4 bg-slate-900 rounded-full flex items-center justify-center space-x-1.5 border border-slate-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
+                        <span class="text-[8px] font-black text-slate-300">SOS LIVE</span>
                     </div>
-                    <span class="text-xs bg-red-500/20 text-red-400 font-extrabold px-2 py-0.5 rounded border border-red-500/30">CRITICAL</span>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-xs text-slate-400">Current GPS Sector:</span>
-                        <strong class="text-sm text-white">Bhadrachalam Lowland</strong>
-                    </div>
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-xs text-slate-400">Inundation Risk:</span>
-                        <strong class="text-2xl font-black text-red-500 mono">94%</strong>
-                    </div>
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-xs text-slate-400">Expected Flood Depth:</span>
-                        <strong class="text-sm text-cyan-400 mono">3.4 Meters</strong>
-                    </div>
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-xs text-slate-400">Time to Peak Inflow:</span>
-                        <strong class="text-sm text-amber-400 mono">3.5 Hours</strong>
+                    <div class="flex items-center space-x-1.5 text-xs">
+                        <span>5G</span>
+                        <i data-lucide="wifi" class="w-3 h-3"></i>
+                        <i data-lucide="battery" class="w-3.5 h-3.5 text-emerald-400"></i>
                     </div>
                 </div>
 
-                <div class="p-3 bg-red-950/40 rounded-xl border border-red-800/40 text-xs text-red-200">
-                    ℹ️ <strong>Action Required:</strong> Avoid bridge crossings. Move elders and children to 2nd floor or designated shelters.
+                <!-- Phone Screen Content (Mobile Web App) -->
+                <div class="bg-[#070d1e] text-slate-100 p-4 rounded-b-[38px] space-y-4 max-h-[720px] overflow-y-auto custom-scrollbar">
+                    
+                    <!-- Mobile Header & Language Selector -->
+                    <div class="flex items-center justify-between border-b border-[#203354] pb-2.5">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow">
+                                R
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-xs text-white leading-tight">ResQcast Citizen</h4>
+                                <p class="text-[9px] text-cyan-400 font-mono">GPS: Bhadrachalam (Active)</p>
+                            </div>
+                        </div>
+                        <select onchange="changeCitizenLanguage(this.value)" class="bg-[#111c33] border border-[#203354] text-[10px] text-slate-200 font-bold rounded-lg px-2 py-1 outline-none">
+                            <option value="en">English</option>
+                            <option value="hi">हिंदी</option>
+                            <option value="te">తెలుగు</option>
+                            <option value="bn">বাংলা</option>
+                        </select>
+                    </div>
+
+                    <!-- Critical Red Alert Evacuation Card -->
+                    <div class="bg-gradient-to-br from-red-600 via-rose-700 to-red-800 p-4 rounded-2xl shadow-xl text-white space-y-2.5 border border-red-400/50">
+                        <div class="flex items-center justify-between">
+                            <span class="bg-white/20 backdrop-blur text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center space-x-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                                <span id="lang-alert-badge">RED ALERT: EVACUATE</span>
+                            </span>
+                            <span class="text-[10px] opacity-90 font-mono">T-0h Live</span>
+                        </div>
+                        <h3 id="lang-alert-title" class="text-base font-black leading-tight">Flash Flood Surge Warning</h3>
+                        <p id="lang-alert-desc" class="text-[11px] text-red-100 leading-snug">River Godavari has breached 16.4m danger level. Evacuate to high ground immediately.</p>
+                        
+                        <!-- Emergency Action Buttons -->
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button onclick="toggleEvacuationSiren()" class="py-2.5 bg-slate-950/80 hover:bg-slate-900 text-white rounded-xl text-[11px] font-bold flex items-center justify-center space-x-1.5 border border-white/20 active:scale-95 transition">
+                                <i data-lucide="volume-2" class="w-3.5 h-3.5 text-amber-400"></i>
+                                <span id="siren-btn-text">Siren Beacon</span>
+                            </button>
+                            <button onclick="transmitCitizenSOS()" class="py-2.5 bg-white text-red-700 hover:bg-red-50 rounded-xl text-[11px] font-black flex items-center justify-center space-x-1.5 shadow-lg active:scale-95 transition">
+                                <i data-lucide="radio" class="w-3.5 h-3.5 text-red-600 animate-ping"></i>
+                                <span>TRANSMIT SOS</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Telemetry Status -->
+                    <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div class="bg-[#111c33] p-2.5 rounded-xl border border-[#203354]">
+                            <span class="text-[9px] text-slate-400 uppercase font-bold block">Inundation</span>
+                            <strong class="text-red-400 text-sm font-black mono">94%</strong>
+                        </div>
+                        <div class="bg-[#111c33] p-2.5 rounded-xl border border-[#203354]">
+                            <span class="text-[9px] text-slate-400 uppercase font-bold block">Water Depth</span>
+                            <strong class="text-cyan-400 text-sm font-black mono">3.4 m</strong>
+                        </div>
+                        <div class="bg-[#111c33] p-2.5 rounded-xl border border-[#203354]">
+                            <span class="text-[9px] text-slate-400 uppercase font-bold block">Peak Surge</span>
+                            <strong class="text-amber-400 text-sm font-black mono">+3.5h</strong>
+                        </div>
+                    </div>
+
+                    <!-- Verified Relief Camps Navigation -->
+                    <div class="bg-[#111c33] p-3.5 rounded-2xl border border-[#203354] space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                                <i data-lucide="home" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                <span>Nearest Relief Camps</span>
+                            </span>
+                            <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-extrabold">3 OPEN</span>
+                        </div>
+
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2 bg-[#070d1e] rounded-xl border border-emerald-500/40 flex items-center justify-between">
+                                <div>
+                                    <strong class="text-white text-[11px] block">Govt College Camp</strong>
+                                    <span class="text-slate-400 text-[9px]">0.8 km • 450/600 Beds</span>
+                                </div>
+                                <button onclick="alert('📍 Opening offline turn-by-turn navigation to Govt College Relief Camp (High Ground Zone 1)')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold">
+                                    Navigate
+                                </button>
+                            </div>
+
+                            <div class="p-2 bg-[#070d1e] rounded-xl border border-[#203354] flex items-center justify-between">
+                                <div>
+                                    <strong class="text-white text-[11px] block">Town Hall Evacuation Center</strong>
+                                    <span class="text-slate-400 text-[9px]">1.4 km • 320/500 Beds</span>
+                                </div>
+                                <button onclick="alert('📍 Opening offline turn-by-turn navigation to Town Hall Center')" class="px-2.5 py-1 bg-[#182746] hover:bg-[#203354] text-slate-200 rounded-lg text-[10px] font-bold">
+                                    Navigate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Offline Emergency Checklist -->
+                    <div class="bg-[#111c33] p-3.5 rounded-2xl border border-[#203354] space-y-2">
+                        <span class="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                            <i data-lucide="check-square" class="w-3.5 h-3.5 text-cyan-400"></i>
+                            <span>Offline Evacuation Pack:</span>
+                        </span>
+                        <div class="space-y-1.5 text-[11px] text-slate-300">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" checked class="rounded bg-[#070d1e] border-slate-700 text-cyan-500">
+                                <span>Drinking water bottles (2L per person)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" checked class="rounded bg-[#070d1e] border-slate-700 text-cyan-500">
+                                <span>Aadhaar card & waterproof identity pouch</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" class="rounded bg-[#070d1e] border-slate-700 text-cyan-500">
+                                <span>Flashlight / torch & power bank charged</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" class="rounded bg-[#070d1e] border-slate-700 text-cyan-500">
+                                <span>Essential prescription medications</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Direct Emergency One-Touch Dialers -->
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <a href="tel:1078" class="bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 p-2 rounded-xl block text-red-300">
+                            <strong class="text-xs block font-bold">1078</strong>
+                            <span class="text-[9px]">NDRF Helpline</span>
+                        </a>
+                        <a href="tel:112" class="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 p-2 rounded-xl block text-blue-300">
+                            <strong class="text-xs block font-bold">112</strong>
+                            <span class="text-[9px]">National ER</span>
+                        </a>
+                        <a href="tel:108" class="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 p-2 rounded-xl block text-emerald-300">
+                            <strong class="text-xs block font-bold">108</strong>
+                            <span class="text-[9px]">Ambulance</span>
+                        </a>
+                    </div>
+
+                    <!-- Home indicator bar -->
+                    <div class="w-28 h-1 bg-slate-700 rounded-full mx-auto mt-2"></div>
                 </div>
             </div>
+        </div>
 
-            <!-- Card 2: Live 24h Hourly Rainfall Nowcast -->
-            <div class="bg-[#111c33] p-5 rounded-2xl border border-[#203354] shadow-xl space-y-4">
-                <div class="flex items-center justify-between border-b border-[#203354] pb-3">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="cloud-rain" class="w-5 h-5 text-blue-400"></i>
-                        <h4 class="font-bold text-sm text-white">24-Hour Rainfall Nowcast</h4>
-                    </div>
-                    <span class="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded border border-blue-500/30">IMD DOPPLER</span>
+        <!-- FULL-WIDTH CITIZEN WEB PORTAL (OPTIONAL EXPANDED VIEW) -->
+        <div id="citizen-web-wrapper" class="hidden flex-col max-w-7xl w-full space-y-6">
+            <!-- Full width cards -->
+            <div class="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-red-400">
+                <div class="space-y-1">
+                    <span class="bg-white text-red-700 text-xs font-black px-2.5 py-0.5 rounded-full uppercase">🚨 RED ALERT: IMMEDIATE EVACUATION</span>
+                    <h3 class="text-2xl font-black">Flash Flood Surge Warning in Bhadrachalam Basin</h3>
+                    <p class="text-sm text-red-100">River Godavari has breached critical danger mark (16.4m). All residents in Sectors 1-4 must evacuate immediately.</p>
                 </div>
-
-                <div class="grid grid-cols-4 gap-2 text-center text-xs">
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
-                        <span class="text-slate-400 text-[10px] block">Now</span>
-                        <strong class="text-red-400 text-sm mono">68 mm/h</strong>
-                    </div>
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
-                        <span class="text-slate-400 text-[10px] block">+3h</span>
-                        <strong class="text-red-400 text-sm mono">85 mm/h</strong>
-                    </div>
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
-                        <span class="text-slate-400 text-[10px] block">+6h</span>
-                        <strong class="text-amber-400 text-sm mono">45 mm/h</strong>
-                    </div>
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354]">
-                        <span class="text-slate-400 text-[10px] block">+12h</span>
-                        <strong class="text-emerald-400 text-sm mono">12 mm/h</strong>
-                    </div>
-                </div>
-
-                <div class="space-y-2 text-xs text-slate-300">
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">Wind Gusts:</span>
-                        <span class="font-bold">45 km/h (ENE)</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">Soil Saturation:</span>
-                        <span class="font-bold text-orange-400">92% (Zero Absorption)</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">River Basin Inflow:</span>
-                        <span class="font-bold text-cyan-400">1.85M Cusecs</span>
-                    </div>
+                <div class="flex items-center space-x-3 shrink-0">
+                    <button onclick="toggleEvacuationSiren()" class="px-5 py-3 bg-slate-950/80 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center space-x-2">
+                        <i data-lucide="volume-2" class="w-4 h-4 text-amber-400"></i>
+                        <span>Siren Beacon</span>
+                    </button>
+                    <button onclick="transmitCitizenSOS()" class="px-6 py-3 bg-white text-red-700 hover:bg-red-50 rounded-xl text-xs font-black flex items-center space-x-2 shadow-2xl">
+                        <i data-lucide="radio" class="w-4 h-4 text-red-600 animate-ping"></i>
+                        <span>TRANSMIT EMERGENCY SOS</span>
+                    </button>
                 </div>
             </div>
-
-            <!-- Card 3: Verified Relief Shelters & Evacuation Routes -->
-            <div class="bg-[#111c33] p-5 rounded-2xl border border-[#203354] shadow-xl space-y-4">
-                <div class="flex items-center justify-between border-b border-[#203354] pb-3">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="home" class="w-5 h-5 text-emerald-400"></i>
-                        <h4 class="font-bold text-sm text-white">Nearest Verified Relief Shelters</h4>
-                    </div>
-                    <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/30">ACTIVE</span>
-                </div>
-
-                <div class="space-y-2.5 text-xs">
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-emerald-500/40 flex items-center justify-between">
-                        <div>
-                            <strong class="text-white text-xs block">Govt Degree College Relief Camp</strong>
-                            <span class="text-slate-400 text-[10px]">0.8 km • Capacity: 450/600</span>
-                        </div>
-                        <span class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-extrabold">OPEN</span>
-                    </div>
-
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354] flex items-center justify-between">
-                        <div>
-                            <strong class="text-white text-xs block">Town Hall Evacuation Center</strong>
-                            <span class="text-slate-400 text-[10px]">1.4 km • Capacity: 320/500</span>
-                        </div>
-                        <span class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-extrabold">OPEN</span>
-                    </div>
-
-                    <div class="p-3 bg-[#0b1426] rounded-xl border border-[#203354] flex items-center justify-between">
-                        <div>
-                            <strong class="text-white text-xs block">Zilla Parishad High School</strong>
-                            <span class="text-slate-400 text-[10px]">2.1 km • Capacity: 180/400</span>
-                        </div>
-                        <span class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-extrabold">OPEN</span>
-                    </div>
-                </div>
-
-                <div class="text-center pt-1">
-                    <span class="text-[11px] text-slate-400">Emergency NDRF Helpline: <strong class="text-orange-400 font-bold">1078 / 112</strong></span>
-                </div>
-            </div>
-
         </div>
 
     </div>
@@ -494,7 +548,7 @@
     </div>
 
     <!-- Application Script -->
-    <script src="/static/app.js?v=20260926_3"></script>
+    <script src="/static/app.js?v=20260926_4"></script>
     <script>
         lucide.createIcons();
 

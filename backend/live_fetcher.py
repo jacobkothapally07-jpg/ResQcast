@@ -5,11 +5,13 @@ and fuses it with satellite NDWI and river gauge telemetry across Indian river b
 """
 
 import os
+import time
 import asyncio
 import json
 import logging
 import ssl
 import urllib.request
+import urllib.error
 from typing import Dict, Any, Optional
 
 from models import DisasterZone, WeatherData, SatelliteScan, SensorReading
@@ -17,7 +19,7 @@ from multimodal_engine import MultimodalFusionEngine
 
 logger = logging.getLogger("resqcast.live_fetcher")
 
-OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
+OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "").strip()
 
 # Coordinates of monitored Indian disaster basins
 ZONE_COORDINATES = {
@@ -34,21 +36,28 @@ ssl_ctx.verify_mode = ssl.CERT_NONE
 
 
 async def fetch_openweather_live(lat: float, lon: float) -> Optional[Dict[str, Any]]:
-    """Fetches real-time live weather telemetry from OpenWeatherMap API."""
+    """Fetches real-time live weather telemetry from OpenWeatherMap API if API key is configured."""
+    if not OPENWEATHER_API_KEY:
+        return None
+
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
     loop = asyncio.get_event_loop()
     def _do_fetch():
-        req = urllib.request.Request(url, headers={"User-Agent": "ResQcast-Disaster-AI/2.0"})
-        with urllib.request.urlopen(req, timeout=5, context=ssl_ctx) as resp:
-            if resp.status == 200:
-                return json.loads(resp.read().decode("utf-8"))
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "ResQcast-Disaster-AI/2.0"})
+            with urllib.request.urlopen(req, timeout=5, context=ssl_ctx) as resp:
+                if resp.status == 200:
+                    return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as he:
+            logger.info(f"OpenWeather returned HTTP {he.code} (falling back to Open-Meteo)")
+        except Exception as e:
+            logger.info(f"OpenWeather fetch notice: {e}")
         return None
 
     try:
         data = await loop.run_in_executor(None, _do_fetch)
         return data
-    except Exception as e:
-        logger.warning(f"OpenWeather live fetch failed for ({lat}, {lon}): {e}")
+    except Exception:
         return None
 
 
@@ -64,41 +73,45 @@ async def fetch_open_meteo_live(lat: float, lon: float) -> Optional[Dict[str, An
     
     loop = asyncio.get_event_loop()
     def _do_fetch():
-        req = urllib.request.Request(url, headers={"User-Agent": "ResQcast-Disaster-AI/2.0"})
-        with urllib.request.urlopen(req, timeout=5, context=ssl_ctx) as resp:
-            if resp.status == 200:
-                return json.loads(resp.read().decode("utf-8"))
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "ResQcast-Disaster-AI/2.0"})
+            with urllib.request.urlopen(req, timeout=5, context=ssl_ctx) as resp:
+                if resp.status == 200:
+                    return json.loads(resp.read().decode("utf-8"))
+        except Exception as e:
+            logger.info(f"Open-Meteo notice for ({lat}, {lon}): {e}")
         return None
 
     try:
         data = await loop.run_in_executor(None, _do_fetch)
         return data
-    except Exception as e:
-        logger.warning(f"Open-Meteo live fetch failed for ({lat}, {lon}): {e}")
+    except Exception:
         return None
 
 
 async def sync_all_zones_live_data(zones_db: Dict[str, DisasterZone]) -> int:
     """Updates all disaster zones with live OpenWeatherMap & satellite telemetry."""
     updated_count = 0
+    now_ts = time.time()
+
     for zone_id, zone in zones_db.items():
         coords = ZONE_COORDINATES.get(zone_id)
         if not coords:
             continue
         
-        # Try OpenWeatherMap first
-        owm_data = await fetch_openweather_live(coords["lat"], coords["lon"])
         live_rain = 0.0
-        live_wind = 15.0
-        humidity = 75.0
+        live_wind = 18.0
+        humidity = 78.0
 
+        # 1. Try OpenWeatherMap first if key exists
+        owm_data = await fetch_openweather_live(coords["lat"], coords["lon"])
         if owm_data and "main" in owm_data:
             humidity = float(owm_data["main"].get("humidity", 75.0))
             live_wind = float(owm_data.get("wind", {}).get("speed", 5.0) * 3.6)  # m/s to km/h
             rain_dict = owm_data.get("rain", {})
             live_rain = float(rain_dict.get("1h", 0.0) or rain_dict.get("3h", 0.0) or 0.0)
 
-        # Supplement with Open-Meteo for soil moisture & precipitation if available
+        # 2. Supplement with Open-Meteo for soil moisture & high-res precipitation
         live_meteo = await fetch_open_meteo_live(coords["lat"], coords["lon"])
         soil_moist = max(60.0, humidity)
         if live_meteo and "current" in live_meteo:
@@ -160,7 +173,7 @@ async def sync_all_zones_live_data(zones_db: Dict[str, DisasterZone]) -> int:
         zone.uncertainty_margin = fusion_result.uncertainty_margin
         zone.rainfall_rate_mm = weather_data.precipitation_mm_hr
         zone.fusion_details = fusion_result
-        zone.last_updated = time.time()
+        zone.last_updated = now_ts
         updated_count += 1
 
     return updated_count
